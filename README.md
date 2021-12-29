@@ -1,4 +1,4 @@
-# EngineForAnimationCourse
+# EngineForAnimationCourse (Dan Atzmi, Or Smolarski)
 Graphic Engine based on Libigl
 
 For compiling:
