@@ -1,18 +1,40 @@
 #pragma once
 #include "igl/opengl/glfw/Viewer.h"
-#include "igl/aabb.h"
+#include "igl/AABB.h"
+#include "simplifier.h"
+
+typedef std::set<std::pair<double, int>> PriorityQueue;
 
 class SandBox : public igl::opengl::glfw::Viewer
 {
 public:
 	SandBox();
 	~SandBox();
+	void OnNewMeshLoad();
 	void Init(const std::string& config);
-	double doubleVariable;
+	void InitObjectData(ObjectData& od, Eigen::MatrixXd& V, Eigen::MatrixXi& F);
+	void ReInitObjectData(ObjectData& od);
+	void ClearObjectData(ObjectData& od);
+	void Simplify();
+	void Simplify(int num_to_collapse, ObjectData& od);
+	void MoveTo(double x, double y);
+	bool ObjectsCollide(igl::AABB<Eigen::MatrixXd, 3>* firstTree, igl::AABB<Eigen::MatrixXd, 3>* secondTree);
+	bool BoxesIntersect(Eigen::AlignedBox <double, 3>& firstBox, Eigen::AlignedBox <double, 3>& secondBox);
+	void SetVelocity(double x, double y);
+	void  IK_CCD();
+	void  IK_FABRIK();
+	Eigen::Vector3d ExtractPosition(Eigen::Vector4d m);
+	bool isCCD;
+	int linksCounter;
+
 private:
 	// Prepare array-based edge data structures and priority queue
-	
-	
+	std::vector<ObjectData*>* objectsData;
+	int destIndex;
+	int firstLinkIndex;
+	int lastLinkIndex;
+	double xVelocity;
+	double yVelocity;
 	void Animate();
 };
 

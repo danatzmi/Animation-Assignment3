@@ -100,7 +100,6 @@ void glfw_window_size(GLFWwindow* window, int width, int height)
 static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int modifier)
 {
 	Renderer* rndr = (Renderer*) glfwGetWindowUserPointer(window);
-	Eigen::Vector3d tmp;
 	SandBox* scn = (SandBox*)rndr->GetScene();
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
@@ -112,6 +111,35 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 		case 'a':
 		{
 			rndr->core().is_animating = !rndr->core().is_animating;
+			break;
+		}
+		case 'B':
+		case 'b':
+		{
+			rndr->core().toggle(scn->data().show_overlay);
+			break;
+		}
+		case 'C':
+		case 'c':
+		{
+			scn->isCCD = !scn->isCCD;
+			if (scn->isCCD)
+			{
+				std::cout << "IK CCD Algorithm" << std::endl;
+			}
+			else
+			{
+				std::cout << "IK FABRIK Algorithm" << std::endl;
+			}
+			break;
+		}
+		case 'D':
+		case 'd':
+		{
+			Eigen::Matrix4d destTrans = scn->data_list.at(0).MakeTransd();
+			Eigen::Vector3d dst = scn->ExtractPosition(destTrans * Eigen::Vector4d(0, 0, 0, 1));
+			Eigen::RowVector3d dstRow = dst.transpose();
+			std::cout << dstRow << std::endl;
 			break;
 		}
 		case 'F':
@@ -139,10 +167,31 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 			rndr->core().orthographic = !rndr->core().orthographic;
 			break;
 		}
+		case 'P':
+		case 'p':
+		{
+			Eigen::Matrix4d m = scn->MakeTransd();
+			if (scn->selected_data_index != -1)
+			{
+				m = scn->data_list[scn->selected_data_index].MakeTransd();
+			}
+			Eigen::Matrix3d rotationMatrix = m.block(0, 0, 3, 3);
+			std::cout << rotationMatrix << std::endl;
+			break;
+		}
 		case 'T':
 		case 't':
 		{
-			rndr->core().toggle(scn->data().show_faces);
+			//rndr->core().toggle(scn->data().show_faces);
+			for (int i = 1; i <= scn->linksCounter; i++)
+			{
+				Eigen::Vector4d upperTip(0, 0.8, 0, 1);
+				Eigen::Matrix4d iParentsTrans = scn->CalcParentsTrans(i);
+				Eigen::Matrix4d iTrans = scn->data_list.at(i).MakeTransd();
+				Eigen::Vector3d tip = scn->ExtractPosition(iParentsTrans * iTrans * upperTip);
+				Eigen::RowVector3d tipRow = tip.transpose();
+				std::cout << tipRow << std::endl;
+			}
 			break;
 		}
 		case '[':
@@ -165,25 +214,24 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 		case 'S':
 			rndr->TranslateCamera(Eigen::Vector3f(0, 0, -0.03f));
 			break;
-		case GLFW_KEY_C:
-			tmp = (scn->data().MakeTransScaled().inverse() * Eigen::Vector4d(0, 0, 0, 1)).head<3>();
-			scn->data().SetCenterOfRotation(tmp);
-			break;
 		case GLFW_KEY_UP:
-			rndr->TranslateCamera(Eigen::Vector3f(0, 0.01f,0));
+			//rndr->TranslateCamera(Eigen::Vector3f(0, 0.01f,0));
+			scn->SetVelocity(0, 0.005);
 			break;
 		case GLFW_KEY_DOWN:
-			rndr->TranslateCamera(Eigen::Vector3f(0, -0.01f,0));
-
+			//rndr->TranslateCamera(Eigen::Vector3f(0, -0.01f,0));
+			scn->SetVelocity(0, -0.005);
 			break;
 		case GLFW_KEY_LEFT:
-				rndr->TranslateCamera(Eigen::Vector3f(-0.01f, 0,0));
+			//rndr->TranslateCamera(Eigen::Vector3f(-0.01f, 0,0));
+			scn->SetVelocity(-0.005, 0);
 			break;
 		case GLFW_KEY_RIGHT:
-			rndr->TranslateCamera(Eigen::Vector3f(0.01f, 0, 0));
+			//rndr->TranslateCamera(Eigen::Vector3f(0.01f, 0, 0));
+			scn->SetVelocity(0.005, 0);
 			break;
 		case ' ':
-
+			scn->isActive = !scn->isActive;
 			break;
 		
 		default: 
